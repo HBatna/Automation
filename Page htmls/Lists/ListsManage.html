@@ -1,0 +1,72 @@
+﻿<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="header">
+                    <h4 class="title">Lists</h4>
+                </div>
+                <div class="content clearfix">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Select List Type</label>
+                                <select class="form-control" ng-model="admin.selectedCategory" ng-options="category as category.Description for category in admin.model.Categories">
+                                    <option value="">--Select Category--</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" ng-if="admin.selectedCategory">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th id="thDescription" class="col-sm-6">Description</th>
+                                    <th id="thCode" class="col-sm-2">Code</th>
+                                    <th id="thActive" class="col-sm-1">Active</th>
+                                    <th id="thEdit" class="col-sm-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="l in admin.selectedCategory.Children">
+                                    <td ng-if="!l.editing">{{l.Description}}</td>
+                                    <td ng-if="!l.editing">{{l.ForeignKeyCode}}</td>
+                                    <td ng-if="!l.editing">
+                                        <span ng-if="l.IsActive">Yes</span>
+                                        <span ng-if="!l.IsActive">No</span>
+                                    </td>
+                                    <td ng-if="!l.editing">
+                                        <button class="btn btn-primary btn-80" ng-click="admin.edit(l)">
+                                            Edit
+                                        </button>
+                                    </td>
+                                    <td ng-if="l.editing"><input type="text" class="form-control" ng-model="l.editorDescription"/></td>
+                                    <td ng-if="l.editing"><input type="text" class="form-control" ng-model="l.editorCode"/></td>
+                                    <td ng-if="l.editing">
+                                        <button class="btn btn-default btn-no-fill btn-40" ng-click="l.editorActive = !l.editorActive">
+                                            <span ng-if="l.editorActive"><i class="fa fa-check"></i></span>
+                                            <span ng-if="!l.editorActive">&nbsp;</span>
+                                        </button>
+                                    </td>
+                                    <td ng-if="l.editing">
+                                        <button class="btn btn-success btn-80" ng-click="admin.save(l)">
+                                            Save
+                                        </button>
+                                        <button class="btn btn-primary btn-no-fill btn-80" style="margin-left:0.5em;" ng-click="admin.cancel(l)">
+                                            Cancel
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr style="background-color:lightgray">
+                                    <td><input type="text" class="form-control" ng-model="admin.newDescription"/></td>
+                                    <td><input type="text" class="form-control" ng-model="admin.newCode"/></td>
+                                    <td></td>
+                                    <td><button class="btn btn-primary btn-80" ng-click="admin.add()">Add</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

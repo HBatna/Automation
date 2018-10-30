@@ -1,0 +1,82 @@
+﻿<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="header">
+                    <h4 class="title">Staff</h4>
+                </div>
+                <div class="content clearfix">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Select Service Provider</label>
+                                <select class="form-control" ng-model="admin.selectedServiceProvider" ng-options="provider as provider.Description for provider in admin.model.ServiceProviders">
+                                    <option value="">--Select Provider--</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" ng-if="admin.selectedServiceProvider">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th id="thDescription" class="col-sm-6">Description</th>
+                                    <th id="thLogon" class="col-sm-2">Logon</th>
+                                    <th id="thActive" class="col-sm-1">Active</th>
+                                    <th id="thEdit" class="col-sm-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="l in admin.selectedServiceProvider.Staff">
+                                    <td ng-if="!l.editing">{{l.Description}}</td>
+                                    <td ng-if="!l.editing">{{l.Logon}}</td>
+                                    <td ng-if="!l.editing">
+                                        <span ng-if="l.IsActive">Yes</span>
+                                        <span ng-if="!l.IsActive">No</span>
+                                    </td>
+                                    <td ng-if="!l.editing">
+                                        <button class="btn btn-primary btn-80" ng-click="admin.edit(l)">
+                                            Edit
+                                        </button>
+                                    </td>
+                                    <td ng-if="l.editing"><input type="text" class="form-control" ng-model="l.editorDescription" /></td>
+                                    <td ng-if="l.editing">
+                                        <select class="form-control" ng-if="admin.selectedServiceProvider.Description == 'DCS'" ng-model="l.editorLogon">
+                                            <option value="">--Select Officer--</option>
+                                            <option ng-repeat="logon in admin.model.Officer" value="{{logon}}">{{logon}}</option>
+                                        </select>
+                                    </td>
+                                    <td ng-if="l.editing">
+                                        <button class="btn btn-default btn-no-fill btn-60" ng-click="l.editorActive = !l.editorActive">
+                                            <span ng-if="l.editorActive"><i class="fa fa-check"></i></span>
+                                            <span ng-if="!l.editorActive">&nbsp;</span>
+                                        </button>
+                                    </td>
+                                    <td ng-if="l.editing">
+                                        <button class="btn btn-success btn-80" ng-click="admin.save(l)">
+                                            Save
+                                        </button>
+                                        <button class="btn btn-primary btn-no-fill btn-80" style="margin-left:0.5em;" ng-click="admin.cancel(l)">
+                                            Cancel
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr style="background-color:lightgray">
+                                    <td><input type="text" class="form-control" ng-model="admin.newDescription" /></td>
+                                    <td>
+                                        <select class="form-control" ng-if="admin.selectedServiceProvider.Description == 'DCS'" ng-model="admin.newLogon">
+                                            <option value="">--Select Officer--</option>
+                                            <option ng-repeat="logon in admin.model.Officer" value="{{logon}}">{{logon}}</option>
+                                        </select>
+                                    </td>
+                                    <td></td>
+                                    <td><button class="btn btn-primary btn-80" ng-click="admin.add()">Add</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
