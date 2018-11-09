@@ -246,6 +246,37 @@ END
 SET @MinCount = @MinCount + 1
 END
 
+--==================================================================================================================
+-- Admin Clinical Intervention - Lists
+--==================================================================================================================
+print 'Admin Clinical Intervention - Lists Type - start'
+
+DELETE FROM ClinicalLookup WHERE ClinicalLookupTypeId='1' AND Description like '%-Template';
+INSERT INTO ClinicalLookup (ClinicalLookupTypeId, Description, ForeignKeyCode, IsActive) 
+VALUES ('1', 'Edit-Template', 'E', '0'); 
+INSERT INTO ClinicalLookup (ClinicalLookupTypeId, Description, ForeignKeyCode, IsActive) 
+VALUES ('1', 'Dup-Template', 'D', '0'); 
+INSERT INTO ClinicalLookup (ClinicalLookupTypeId, Description, ForeignKeyCode, IsActive) 
+VALUES ('1', 'Update-Template', 'U', '1');
+
+print 'Admin Caseload Intervention - Lists Type - end'
+GO
+
+--==================================================================================================================
+-- Admin Clinical Intervention - ServiceProviders
+--==================================================================================================================
+print 'Admin Clinical Intervention - ServiceProviders - start'
+
+DELETE FROM ClinicalLookup WHERE ClinicalLookupTypeid='29' AND Description like '%-ServiceProvider';
+INSERT INTO ClinicalLookup (ClinicalLookupTypeId, Description, ForeignKeyCode, IsActive, ParentId) 
+VALUES ('29', 'Edit-ServiceProvider', 'E', '0', '489'); 
+INSERT INTO ClinicalLookup (ClinicalLookupTypeId, Description, ForeignKeyCode, IsActive, ParentId) 
+VALUES ('29', 'Dup-ServiceProvider', 'D', '0', '490');
+INSERT INTO ClinicalLookup (ClinicalLookupTypeId, Description, ForeignKeyCode, IsActive, ParentId) 
+VALUES ('29', 'Update-ServiceProvider', 'U', '1', '490');
+
+print 'Admin Caseload Intervention - ServiceProviders - end'
+GO
 
 --==================================================================================================================
 -- Admin Staff
@@ -265,4 +296,24 @@ VALUES ('3', 'Dup-CH-Staff', '0', '813'),
 		('3', 'Edit-CH-Staff', '0', '813');
 
 print 'Admin Staff - end'
+GO
+
+--==================================================================================================================
+-- Admin Officers - Create
+--==================================================================================================================
+print 'Admin Officers - Create: Deleting matching test officers and Updating a record in (Create officer for Automated Regression Testing) - start'
+
+UPDATE dbo.Officer SET OfficerDeletedDate = getdate(), IsActive = 0
+WHERE Id = (SELECT Id FROM Officer WHERE Logon like 'JUSTICE\testLogon%' AND OfficerDeletedDate IS NULL);
+UPDATE Officer SET OfficerPreferencesId = Null WHERE Id = (SELECT Id FROM Officer WHERE Logon like 'JUSTICE\testLogon%');
+Delete FROM OfficerPreferences WHERE OfficerId = (SELECT Id FROM Officer WHERE Logon like 'JUSTICE\testLogon%');
+Delete FROM OfficerPmsGroup WHERE OfficerId = (SELECT Id FROM Officer WHERE Logon like 'JUSTICE\testLogon%');
+Delete FROM OfficerTrace WHERE OfficerId =(SELECT Id FROM Officer WHERE Logon like 'JUSTICE\testLogon%');
+Delete FROM OfficerSite WHERE OfficerId = (SELECT Id FROM Officer WHERE Logon like 'JUSTICE\testLogon%');
+Delete FROM Officer WHERE Id = (SELECT Id FROM Officer WHERE Logon like 'JUSTICE\testLogon%');
+Delete FROM Person WHERE NameId = (SELECT Id FROM AnyName WHERE LastName like 'testLastName%'); 
+Delete FROM AnyName WHERE LastName like 'testLastName%';
+UPDATE Officer SET EmployeeNo = '111102' WHERE Logon = 'TestStaffLogon05';
+
+print 'Admin Officers - Create: Deleting matching test officers and Updating a record in (Create officer for Automated Regression Testing) - end'
 GO

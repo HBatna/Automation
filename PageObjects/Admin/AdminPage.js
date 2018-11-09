@@ -91,7 +91,12 @@
         },
         Officers: {
             GetElement: function () { return self.GetMenuItem(9); },
-            GetSubItems: function () { return self.GetSubMenuItems(9); }
+            GetSubItems: function () { return self.GetSubMenuItems(9); },
+            SubItems: {
+                Create: {
+                    GetElement: function () { return self.GetMenu().get(9).all(by.repeater('c in m.children')).get(0); }
+                }
+            }
         },
         Orders: {
             GetElement: function () { return self.GetMenuItem(10); },
