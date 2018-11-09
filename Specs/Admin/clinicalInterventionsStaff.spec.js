@@ -7,10 +7,11 @@ describe("Admin Centre", function () {
 		var adminPage;
 		var staffPage;
 		var notificationService;
+        var defaultProvider = '--Select Provider--';
 
 		beforeAll(function () {
 			browser.driver.manage().window().maximize();
-			browser.get('./Projects.html#/Admin/');
+			browser.get('./Cbis/App/Cbis.html#/Admin/Overview/');
 			adminPage = new AdminPage();
 			notificationService = new NotificationService();
 			adminPage.Menu.ClinicalInterventions.GetElement().click().then(function () {
@@ -20,22 +21,24 @@ describe("Admin Centre", function () {
 		});
 
 		it('Initialization', function (done) {
-			var defaultProvider = '--Select Provider--';
 			adminPage.Labels.PageTitle.getText().then(function (text) {
 				expect(text.toLowerCase()).toBe('clinical interventions - manage staff');
+                expect(staffPage.ServiceProvidersDropdown.isPresent()).toBe(true);
 				expect(staffPage.ServiceProvidersDropdown.isDisplayed()).toBe(true);
-				expect(staffPage.ServiceProvidersDropdown.isPresent()).toBe(true);
 				expect(staffPage.ServiceProvidersDropdown.isEnabled()).toBe(true);
 				expect(staffPage.ServiceProvidersOptions().count()).toBeGreaterThan(1);
 				expect(staffPage.ServiceProvidersOptions().get(0).getText()).toEqual(defaultProvider);
-				staffPage.SelectServiceProviderOption('DCS').then(function () {
-					expect(staffPage.GetRowCount()).toBeGreaterThan(-1);
-					staffPage.SelectServiceProviderOption(defaultProvider).then(function () {
-						expect(staffPage.GetRowCount()).toEqual(0);
-					});
-				});
 			}).finally(done);
 		});
+
+        it('should clear staff list on selecting default provider', function() {
+            staffPage.SelectServiceProviderOption('DCS').then(function () {
+                expect(staffPage.GetRowCount()).toBeGreaterThan(0);
+                staffPage.SelectServiceProviderOption(defaultProvider).then(function () {
+                    expect(staffPage.GetRowCount()).toEqual(0);
+                });
+            });
+        });
 
 		describe('service Provider - DCS)', function () {
 			var selectDCSProvider = 'DCS';
@@ -60,7 +63,7 @@ describe("Admin Centre", function () {
 			var editLogon = 'DCSTestStaffLogon06';
 
 			it('should display StaffList for DCS-ServiceProvider', function () {
-				expect(staffPage.GetRowCount()).toBeGreaterThan(-1);
+				expect(staffPage.GetRowCount()).toBeGreaterThan(0);
 				expect(staffPage.TextBoxes.NewDescription.isEnabled()).toBe(true);
 				expect(staffPage.OfficerLogonDropdown.isPresent()).toBe(true);
 				expect(staffPage.OfficerLogonDropdown.isEnabled()).toBe(true);
@@ -70,63 +73,75 @@ describe("Admin Centre", function () {
 				expect(staffPage.Buttons.Add.isEnabled()).toBe(true);
 			});
 
-			it('should add new DCSstaff without OfficerLogon selected', function (done) {
-				staffPage.TextBoxes.NewDescription.sendKeys(addStaff1);
-				staffPage.Buttons.Add.click().then(function () {
-					expect(notificationService.GetSuccessNotifications().count()).toEqual(1);
-					expect(notificationService.GetSuccessNotifications().get(0).getText()).toEqual(message);
-					staffPage.ProvidersStaff.GetRow([addStaff1, '', 'Yes', 'Edit']).then(function (index) {
-						expect(index).toBeGreaterThan(-1);
-					});
+			it('should add new DCS staff without OfficerLogon selected', function (done) {
+                staffPage.GetRowCount().then(function(rowCountBefore) {
+                    staffPage.TextBoxes.NewDescription.sendKeys(addStaff1);
+                    staffPage.Buttons.Add.click().then(function () {
+                        expect(notificationService.GetSuccessNotifications().get(0).getText()).toEqual(message);
+                        staffPage.GetRowCount().then(function(rowCountAfter) {
+                            expect(rowCountAfter).toEqual(rowCountBefore + 1);
+                            staffPage.ProvidersStaff.GetRow([addStaff1, '', 'Yes', 'Edit']).then(function(index) {
+                                expect(index).toBeGreaterThan(-1);
+                            });
+                        });
+                    });
 				}).finally(done);
 			});
 
-			it('should add new DCSstaff with OfficerLogon selected', function (done) {
-				staffPage.TextBoxes.NewDescription.sendKeys(addStaff2);
-				staffPage.SelectOfficerLogonOption(addLogon2);
-				staffPage.Buttons.Add.click().then(function () {
-					staffPage.ProvidersStaff.GetRow([addStaff2, addLogon2, 'Yes', 'Edit']).then(function (index) {
-						expect(index).toBeGreaterThan(-1);
-						expect(notificationService.GetSuccessNotifications().count()).toEqual(1);
-						expect(notificationService.GetSuccessNotifications().get(0).getText()).toEqual(message);
-					});
+			it('should add new DCS staff with OfficerLogon selected', function (done) {
+                staffPage.GetRowCount().then(function(rowCountBefore) {
+                    staffPage.TextBoxes.NewDescription.sendKeys(addStaff2);
+                    staffPage.SelectOfficerLogonOption(addLogon2);
+                    staffPage.Buttons.Add.click().then(function () {
+                        expect(notificationService.GetSuccessNotifications().get(0).getText()).toEqual(message);
+                        staffPage.GetRowCount().then(function(rowCountAfter) {
+                            expect(rowCountAfter).toEqual(rowCountBefore+1);
+
+                            staffPage.ProvidersStaff.GetRow([addStaff2, addLogon2, 'Yes', 'Edit']).then(function (index) {
+                                expect(index).toBeGreaterThan(-1);
+                            });
+                        });
+                    });
 				}).finally(done);
 			});
 
-			it('should not add as duplicate DCSStaffName', function (done) {
-			 // RowExists:[A-DCSTestStaff03, DCSTestStaffLogon03, No]
-				staffPage.GetRowCount().then(function(count) {
-					var rowCountBefore = count;
+			it('should not add as duplicate DCS staff Name', function (done) {
+                // RowExists:[A-DCSTestStaff03, DCSTestStaffLogon03, No]
+				staffPage.GetRowCount().then(function(rowCountBefore) {
 					staffPage.TextBoxes.NewDescription.sendKeys(dupName);
 					staffPage.Buttons.Add.click().then(function () {
-						var rowCountAfter = rowCountBefore;
-						expect(rowCountBefore).toEqual(rowCountAfter);
-						expect(notificationService.GetErrorNotifications().get(0).getText()).toEqual(errorMessage);
-						staffPage.ProvidersStaff.GetRow([dupName, dupLogon, 'No', 'Edit']).then(function (index) {
-							expect(index).toBeGreaterThan(-1);
-						});
+                        expect(notificationService.GetErrorNotifications().get(0).getText()).toEqual(errorMessage);
+                        staffPage.GetRowCount().then(function(rowCountAfter) {
+                            expect(rowCountAfter).toEqual(rowCountBefore);
+
+                            staffPage.ProvidersStaff.GetRow([dupName, dupLogon, 'No', 'Edit']).then(function (index) {
+                                expect(index).toBeGreaterThan(-1);
+                            });
+                        });
 					});
-				 }).finally(done);
+                }).finally(done);
 			});
 
-			it('should edit and save changes to a DCSstaff record', function (done) {
-			// RowExists:[A-DCSTestStaff04, DCSTestStaffLogon04, Yes] 
-				staffPage.GetRowCount().then(function(count) {
-					var rowCountBefore = count;
+			it('should edit and save changes to a DCS staff record', function (done) {
+                // RowExists:[A-DCSTestStaff04, DCSTestStaffLogon04, Yes] 
+                staffPage.GetRowCount().then(function(rowCountBefore) {
 					staffPage.ProvidersStaff.GetRow([updateName, updateLogon, 'Yes', 'Edit']).then(function (index) {
 						staffPage.EditClick(index).then(function () {
 							expect(staffPage.Buttons.Save.isEnabled()).toBe(true);
 							staffPage.TextBoxes.EditDescription.clear();
 							staffPage.TextBoxes.EditDescription.sendKeys(updatedName);
-							staffPage.UpdateOfficerLogonOption(updatedLogon);
+							staffPage.SelectEditOfficerLogonOption(updatedLogon);
 							staffPage.Buttons.isActive.click();
 							staffPage.SaveClick(index).then(function () {
 								expect(notificationService.GetSuccessNotifications().get(0).getText()).toEqual(message);
-								staffPage.ProvidersStaff.GetRow([updatedName, updatedLogon, 'No', 'Edit']).then(function (index) {
-									expect(index).toBeGreaterThan(-1);
-									var rowCountAfter = rowCountBefore;
-									expect(rowCountBefore).toEqual(rowCountAfter);
-								});
+
+                                staffPage.GetRowCount().then(function(rowCountAfter) {
+                                    expect(rowCountBefore).toEqual(rowCountAfter);
+
+                                    staffPage.ProvidersStaff.GetRow([updatedName, updatedLogon, 'No', 'Edit']).then(function(index) {
+                                        expect(index).toBeGreaterThan(-1);
+                                    });
+                                });
 							});
 						});
 					});
@@ -134,26 +149,29 @@ describe("Admin Centre", function () {
 			});
 
 			it('should not edit save as duplicate Staff', function (done) {
-			// RowExists:[A-DCSTestStaff03, DCSTestStaffLogon03, No], [A-DCSTestStaff06, DCSTestStaffLogon06, No];
-				staffPage.GetRowCount().then(function(count) {
-					var rowCountBefore = count;
+                // RowExists:[A-DCSTestStaff03, DCSTestStaffLogon03, No], [A-DCSTestStaff06, DCSTestStaffLogon06, No];
+				staffPage.GetRowCount().then(function(rowCountBefore) {
 					staffPage.ProvidersStaff.GetRow([editName, editLogon, 'No', 'Edit']).then(function (index) {
 						staffPage.EditClick(index).then(function () {
 							staffPage.TextBoxes.EditDescription.clear();
 							staffPage.TextBoxes.EditDescription.sendKeys(dupName);
 							staffPage.SaveClick(index).then(function () {
 								expect(notificationService.GetErrorNotifications().get(0).getText()).toEqual(errorMessage);
-								var rowCountAfter = rowCountBefore;
-								expect(rowCountBefore).toEqual(rowCountAfter);
-								browser.refresh();
-								staffPage.SelectServiceProviderOption(selectDCSProvider).then(function () {
-									staffPage.ProvidersStaff.GetRow([editName, editLogon, 'No', 'Edit']).then(function (index) {
-										expect(index).toBeGreaterThan(-1);
-										staffPage.ProvidersStaff.GetRow([dupName, dupLogon, 'No', 'Edit']).then(function (index) {
-											expect(index).toBeGreaterThan(-1);
-										});
-									});
-								});
+
+                                staffPage.GetRowCount().then(function(rowCountAfter) {
+                                    expect(rowCountBefore).toEqual(rowCountAfter);
+
+                                    browser.refresh();
+                                    staffPage.SelectServiceProviderOption(selectDCSProvider).then(function() {
+                                        staffPage.ProvidersStaff.GetRow([editName, editLogon, 'No', 'Edit']).then(function(index) {
+                                            expect(index).toBeGreaterThan(-1);
+
+                                            staffPage.ProvidersStaff.GetRow([dupName, dupLogon, 'No', 'Edit']).then(function(index) {
+                                                expect(index).toBeGreaterThan(-1);
+                                            });
+                                        });
+                                    });
+                                });
 							});
 						});
 					});
@@ -161,7 +179,7 @@ describe("Admin Centre", function () {
 			});
 
 			it('should edit and cancel changes to a Staff record', function (done) {
-			// RowExists:[A-DCSTestStaff06, DCSTestStaffLogon06, No]
+                // RowExists:[A-DCSTestStaff06, DCSTestStaffLogon06, No]
 				staffPage.ProvidersStaff.GetRow([editName, editLogon, 'No', 'Edit']).then(function (index) {
 					staffPage.EditClick(index).then(function () {
 						expect(staffPage.Buttons.Cancel.isEnabled()).toBe(true);
@@ -182,6 +200,7 @@ describe("Admin Centre", function () {
 
 		describe('service Provider - Non DCS', function () {
 			var selectNonDCSProvider = 'Cyrenian House';
+
 			beforeEach(function () {
 				browser.refresh();
 				staffPage.SelectServiceProviderOption(selectNonDCSProvider);
@@ -195,7 +214,7 @@ describe("Admin Centre", function () {
 			var updateDescription = 'Update-CH-Staff';
 			var updatedDescription = 'Updated-CH-Staff';
 
-			it('should display StaffList for selected NonDCS-ServiceProvider', function () {
+			it('should display StaffList for selected Non DCS-ServiceProvider', function () {
 				expect(staffPage.GetRowCount()).toBeGreaterThan(-1);
 				expect(staffPage.TextBoxes.NewDescription.isEnabled()).toBe(true);
 				expect(staffPage.OfficerLogonDropdown.isPresent()).toBe(false);
@@ -204,36 +223,41 @@ describe("Admin Centre", function () {
 			});
 
 			it('should add new Staff', function () {
-				staffPage.TextBoxes.NewDescription.sendKeys(addDescription);
-				staffPage.Buttons.Add.click().then(function () {
-					expect(notificationService.GetSuccessNotifications().count()).toEqual(1);
-					expect(notificationService.GetSuccessNotifications().get(0).getText()).toEqual(message);
-					staffPage.ProvidersStaff.GetRow([addDescription, '', 'Yes', 'Edit']).then(function (index) {
-						expect(index).toBeGreaterThan(-1);
-					});
-				});
+                staffPage.GetRowCount().then(function(rowCountBefore) {
+                    staffPage.TextBoxes.NewDescription.sendKeys(addDescription);
+                    staffPage.Buttons.Add.click().then(function () {
+                        expect(notificationService.GetSuccessNotifications().get(0).getText()).toEqual(message);
+
+                        staffPage.GetRowCount().then(function(rowCountAfter) {
+                            expect(rowCountAfter).toEqual(rowCountBefore + 1);
+
+                            staffPage.ProvidersStaff.GetRow([addDescription, '', 'Yes', 'Edit']).then(function(index) {
+                                expect(index).toBeGreaterThan(-1);
+                            });
+                        });
+                    });
+                });
 			});
 
-			it('should not add as duplicate StaffName ', function (done) {
-			// RowExists:[Dup-CH-Staff, No]
-				staffPage.GetRowCount().then(function(count) {
-					var rowCountBefore = count;
+			it('should not add as duplicate Staff Name ', function (done) {
+                // RowExists:[Dup-CH-Staff, No]
+				staffPage.GetRowCount().then(function(rowCountBefore) {
 					staffPage.TextBoxes.NewDescription.sendKeys(dupDescription);
 					staffPage.Buttons.Add.click().then(function () {
-						var rowCountAfter = rowCountBefore;
-						expect(rowCountBefore).toEqual(rowCountAfter);
 						expect(notificationService.GetErrorNotifications().get(0).getText()).toEqual(errorMessage);
-						staffPage.ProvidersStaff.GetRow([dupDescription, '', 'No', 'Edit']).then(function (index) {
-							expect(index).toBeGreaterThan(-1);
-						});
+                        staffPage.GetRowCount().then(function(rowCountAfter) {
+                            expect(rowCountBefore).toEqual(rowCountAfter);
+                            staffPage.ProvidersStaff.GetRow([dupDescription, '', 'No', 'Edit']).then(function (index) {
+                                expect(index).toBeGreaterThan(-1);
+                            });
+                        });
 					});
 				}).finally(done);
 			});
 
 			it('should edit and save changes to a Staff record', function (done) {
-			// RowExists:[Update-CH-Staff, '', 'Yes']
-				staffPage.GetRowCount().then(function(count) {
-					var rowCountBefore = count;
+                // RowExists:[Update-CH-Staff, '', 'Yes']
+				staffPage.GetRowCount().then(function(rowCountBefore) {
 					staffPage.ProvidersStaff.GetRow([updateDescription, '', 'Yes', 'Edit']).then(function (index) {
 						staffPage.EditClick(index).then(function () {
 							expect(staffPage.Buttons.Save.isPresent()).toBe(true);
@@ -243,10 +267,12 @@ describe("Admin Centre", function () {
 							staffPage.Buttons.isActive.click();
 							staffPage.SaveClick(index).then(function () {
 								expect(notificationService.GetSuccessNotifications().get(0).getText()).toEqual(message);
-								staffPage.ProvidersStaff.GetRow([updatedDescription, '', 'No', 'Edit']).then(function (index) {
-									expect(index).toBeGreaterThan(-1);
-									var rowCountAfter = rowCountBefore;
-									expect(rowCountBefore).toEqual(rowCountAfter);
+                                staffPage.GetRowCount().then(function(rowCountAfter) {
+                                    expect(rowCountAfter).toEqual(rowCountBefore);
+
+                                    staffPage.ProvidersStaff.GetRow([updatedDescription, '', 'No', 'Edit']).then(function (index) {
+                                        expect(index).toBeGreaterThan(-1);
+                                    });
 								});
 							});
 						});
@@ -255,9 +281,8 @@ describe("Admin Centre", function () {
 			});
 
 			it('should not edit save as duplicate Staff', function (done) {
-			// RowExists:[Dup-CH-Staff, No], [Edit-CH-Staff, No];
-				staffPage.GetRowCount().then(function(count) {
-					var rowCountBefore = count;
+                // RowExists:[Dup-CH-Staff, No], [Edit-CH-Staff, No];
+				staffPage.GetRowCount().then(function(rowCountBefore) {
 					staffPage.ProvidersStaff.GetRow([editDescription, '', 'No', 'Edit']).then(function (index) {
 						staffPage.EditClick(index).then(function () {
 							staffPage.TextBoxes.EditDescription.clear();
@@ -265,17 +290,19 @@ describe("Admin Centre", function () {
 							staffPage.Buttons.isActive.click();
 							staffPage.SaveClick(index).then(function () {
 								expect(notificationService.GetErrorNotifications().get(0).getText()).toEqual(errorMessage);
-								var rowCountAfter = rowCountBefore;
-								expect(rowCountBefore).toEqual(rowCountAfter);
-								browser.refresh();
-								staffPage.SelectServiceProviderOption(selectNonDCSProvider).then(function () {
-									staffPage.ProvidersStaff.GetRow([editDescription, '', 'No', 'Edit']).then(function (index) {
-										expect(index).toBeGreaterThan(-1);
-										staffPage.ProvidersStaff.GetRow([dupDescription, '', 'No', 'Edit']).then(function (index) {
-											expect(index).toBeGreaterThan(-1);
-										});
-									});
-								});
+                                staffPage.GetRowCount().then(function(rowCountAfter) {
+                                    expect(rowCountAfter).toEqual(rowCountBefore);
+
+                                    browser.refresh();
+                                    staffPage.SelectServiceProviderOption(selectNonDCSProvider).then(function () {
+                                        staffPage.ProvidersStaff.GetRow([editDescription, '', 'No', 'Edit']).then(function (index) {
+                                            expect(index).toBeGreaterThan(-1);
+                                            staffPage.ProvidersStaff.GetRow([dupDescription, '', 'No', 'Edit']).then(function (index) {
+                                                expect(index).toBeGreaterThan(-1);
+                                            });
+                                        });
+                                    });
+                                });
 							});
 						});
 					});
@@ -283,7 +310,7 @@ describe("Admin Centre", function () {
 			});
 
 			it('should edit and cancel changes to a Staff record', function (done) {
-			// RowExists:[Edit-CH-Staff, No]
+                // RowExists:[Edit-CH-Staff, No]
 				staffPage.ProvidersStaff.GetRow([editDescription, '', 'No', 'Edit']).then(function (index) {
 					staffPage.EditClick(index).then(function () {
 						expect(staffPage.Buttons.Cancel.isPresent()).toBe(true);

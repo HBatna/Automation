@@ -12,9 +12,9 @@ var ClinicalInterventionStaffPage = function () {
 		return self.ServiceProvidersDropdown.all(by.xpath('option[.="'+text+'"]')).click();
 	};
 
-	self.GetRowCount = function() {
-		return element.all(by.repeater('l in admin.selectedServiceProvider.Staff')).count();
-	}
+    self.GetRowCount = function() {
+        return element.all(by.repeater('l in admin.selectedServiceProvider.Staff')).count();
+    };
 
 	self.OfficerLogonDropdown = element(by.model("admin.newLogon"));
 	
@@ -30,7 +30,7 @@ var ClinicalInterventionStaffPage = function () {
 
 	self.EditOfficerLogonDropdown = element(by.model("l.editorLogon"));	
 
-	self.UpdateOfficerLogonOption = function (value) {
+	self.SelectEditOfficerLogonOption = function (value) {
 		return self.EditOfficerLogonDropdown.element(by.css('option[value="' + value + '"]')).click();
 	};
 
